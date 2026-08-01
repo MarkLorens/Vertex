@@ -267,6 +267,10 @@ extension DesignTokens {
         static let countdownSmall = TextStyle(.system(size: 52, weight: .semibold), tracking: -2.4)
         /// 40pt / bold / -1.6. A single emphatic number in a card.
         static let numeral = TextStyle(.system(size: 40, weight: .bold), tracking: -1.6)
+        /// 34pt / semibold (600) / -0.6. The unit suffix beside a hero numeral ("d").
+        static let countdownUnit = TextStyle(.system(size: 34, weight: .semibold), tracking: -0.6)
+        /// 30pt / semibold (600) / -0.6. The hours/minutes/seconds line under the hero numeral.
+        static let countdownSecondary = TextStyle(.system(size: 30, weight: .semibold), tracking: -0.6)
 
         // MARK: Titles
 
@@ -289,6 +293,8 @@ extension DesignTokens {
         static let rowTitle = TextStyle(.system(size: 17, weight: .bold), tracking: -0.35)
         /// 17pt / semibold (660) / -0.3. The label on a full-width button.
         static let button = TextStyle(.system(size: 17, weight: .semibold), tracking: -0.3)
+        /// 17pt / semibold (600) / -0.2. The line introducing a hero title ("Three sleeps until").
+        static let lede = TextStyle(.system(size: 17, weight: .semibold), tracking: -0.2)
         /// 16.5pt / semibold (680) / -0.3. Emphasised body.
         static let bodyLargeStrong = TextStyle(.system(size: 16.5, weight: .semibold), tracking: -0.3)
         /// 16.5pt / regular / -0.3. Field values and long-form body.
@@ -309,6 +315,8 @@ extension DesignTokens {
         static let footnote = TextStyle(.system(size: 14.5, weight: .regular), tracking: -0.2)
         /// 14pt / semibold (650) / -0.1. An inline text action ("Nudge", "Plan").
         static let link = TextStyle(.system(size: 14, weight: .semibold), tracking: -0.1)
+        /// 14pt / regular / -0.2. A supporting line under a card's content.
+        static let footnoteSmall = TextStyle(.system(size: 14, weight: .regular), tracking: -0.2)
 
         // MARK: Captions
 
@@ -318,8 +326,11 @@ extension DesignTokens {
         static let caption = TextStyle(.system(size: 13.5, weight: .regular), tracking: -0.1)
         /// 13pt / regular / -0.1 · line-height 1.4. Fine print and disclaimers.
         static let caption2 = TextStyle(.system(size: 13, weight: .regular), tracking: -0.1)
-        /// 12.5pt / semibold / +0.3. The smallest emphasised label ("OR").
-        static let caption3 = TextStyle(.system(size: 12.5, weight: .semibold), tracking: 0.3)
+        /// 12.5pt / semibold (620) / 0. The smallest emphasised label, e.g. a status pill.
+        /// The "OR" rule label is the one place the doc adds +0.3 tracking.
+        static let caption3 = TextStyle(.system(size: 12.5, weight: .semibold))
+        /// 11.5pt / semibold (650) / 0. Initials inside an avatar.
+        static let avatarInitials = TextStyle(.system(size: 11.5, weight: .semibold))
 
         // MARK: Uppercase labels — set the text uppercased at the call site
 
@@ -385,8 +396,12 @@ extension DesignTokens {
         static let sheetPadding: CGFloat = 20
         /// 22pt — the wider sheet padding used on the auth screens.
         static let sheetPaddingWide: CGFloat = 22
+        /// 20pt — the screen gutter for a header row over the field.
+        static let screenPadding: CGFloat = 20
         /// 24pt — horizontal padding for content sitting directly on the field.
         static let fieldPadding: CGFloat = 24
+        /// 26pt — the roomier gutter the hero block uses on the field.
+        static let heroPadding: CGFloat = 26
         /// 16pt — internal padding of a card.
         static let cardPadding: CGFloat = 16
         /// 15pt — internal padding of a field or a compact card.
