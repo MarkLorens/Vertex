@@ -19,16 +19,13 @@ struct UpcomingCountdown: View {
             Text(title)
                 .textStyle(DesignTokens.Typography.titleXLarge)
                 .foregroundStyle(DesignTokens.Colors.onField)
-                // line-height 1.08 against SF's natural ~1.2 at this size.
                 .lineSpacing(-4)
                 .padding(.bottom, 18)
 
             HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.sm) {
-                Text(pad(days))
-                    .textStyle(DesignTokens.Typography.countdownHero)
+                DesignTokens.Typography.countdownHero.text(pad(days))
                     .foregroundStyle(DesignTokens.Colors.onField)
-                Text("d")
-                    .textStyle(DesignTokens.Typography.countdownUnit)
+                DesignTokens.Typography.countdownUnit.text("d")
                     .foregroundStyle(DesignTokens.Colors.onField.opacity(0.66))
                     .padding(.bottom, 8)
             }
@@ -42,11 +39,13 @@ struct UpcomingCountdown: View {
         }
         .monospacedDigit()
         .frame(maxWidth: .infinity, alignment: .leading)
+        // The doc lifts this block 14pt off centre; doubling it as bottom
+        // padding shifts the content up by half. 1f uses 30.
+        .padding(.bottom, 28)
     }
 
     private func unit(_ value: Int, _ suffix: String, opacity: Double) -> some View {
-        Text("\(pad(value))\(suffix)")
-            .textStyle(DesignTokens.Typography.countdownSecondary)
+        DesignTokens.Typography.countdownSecondary.text("\(pad(value))\(suffix)")
             .foregroundStyle(DesignTokens.Colors.onField.opacity(opacity))
     }
 

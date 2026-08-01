@@ -303,6 +303,9 @@ extension DesignTokens {
         static let navTitle = TextStyle(.system(size: 16, weight: .semibold), tracking: -0.2)
         /// 16pt / medium (500) / -0.2. Body.
         static let body = TextStyle(.system(size: 16, weight: .medium), tracking: -0.2)
+        /// 16pt / regular / -0.2 · line-height 1.5. The explanatory paragraph
+        /// under an empty-state headline. Wraps at 300pt in the doc.
+        static let paragraph = TextStyle(.system(size: 16, weight: .regular), tracking: -0.2, lineSpacing: 5)
         /// 15.5pt / regular / -0.2. The sub-headline under a hero title.
         static let subtitle = TextStyle(.system(size: 15.5, weight: .regular), tracking: -0.2)
         /// 15pt / semibold (650) / -0.2. Emphasised callout.
@@ -353,10 +356,37 @@ extension DesignTokens {
 
 extension View {
     /// Applies a `DesignTokens.TextStyle` — font, tracking and leading together.
+    ///
+    /// `.tracking()` also shortens the last character's advance, which pulls the
+    /// text's layout width in under its own ink and crops the final glyph. At
+    /// body sizes that loss is under a point and never shows; at display sizes
+    /// it visibly slices the last character, so use `TextStyle.text(_:)` there.
     func textStyle(_ style: DesignTokens.TextStyle) -> some View {
         self.font(style.font)
             .tracking(style.tracking)
             .lineSpacing(style.lineSpacing)
+    }
+}
+
+extension DesignTokens.TextStyle {
+    /// The same style with tracking applied *between* characters only, so the
+    /// final glyph keeps its natural advance and renders uncropped. Required
+    /// for the display sizes, where tracking runs to -9.
+    func text(_ string: String) -> some View {
+        var attributed = AttributedString(string)
+        let characters = attributed.characters
+        if tracking != 0,
+           characters.count > 1,
+           let lastCharacter = characters.index(
+               attributed.startIndex,
+               offsetBy: characters.count - 1,
+               limitedBy: attributed.endIndex
+           ) {
+            attributed[attributed.startIndex..<lastCharacter].kern = tracking
+        }
+        return Text(attributed)
+            .font(font)
+            .lineSpacing(lineSpacing)
     }
 }
 
