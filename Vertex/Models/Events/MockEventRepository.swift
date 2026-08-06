@@ -6,10 +6,16 @@ import Foundation
 final class MockEventRepository: EventRepository, UserDirectory, @unchecked Sendable {
 
     private var details: [EventID: EventDetail]
-    private var users: [User]
-    private let lock = NSLock()
+    fileprivate var users: [User]
+    fileprivate let lock = NSLock()
     private var eventListeners: [UUID: (UserID, AsyncStream<[Event]>.Continuation)] = [:]
     private var detailListeners: [UUID: (EventID, AsyncStream<EventDetail>.Continuation)] = [:]
+    fileprivate var requests: [FriendRequest] = []
+    fileprivate var accepted: [FriendRequest] = []
+    fileprivate var acceptedListeners: [UUID: (UserID, AsyncStream<[FriendRequest]>.Continuation)] = [:]
+    fileprivate var friendListeners: [UUID: (UserID, AsyncStream<[User]>.Continuation)] = [:]
+    fileprivate var requestListeners: [UUID: (UserID, Bool, AsyncStream<[FriendRequest]>.Continuation)] = [:]
+    fileprivate var userListeners: [UUID: AsyncStream<User>.Continuation] = [:]
 
     init(seed: [EventDetail] = MockData.yourEvents, users: [User] = MockData.everyone) {
         details = Dictionary(uniqueKeysWithValues: seed.map { ($0.event.id, $0) })
@@ -172,5 +178,172 @@ private extension NSLock {
         lock()
         defer { unlock() }
         return work()
+    }
+}
+
+// MARK: - Friends
+
+extension MockEventRepository {
+
+    func observeUser(_ uid: UserID) -> AsyncStream<User> {
+        AsyncStream { continuation in
+            let key = UUID()
+            lock.withLock { userListeners[key] = continuation }
+            if let user = lock.withLock({ users.first { $0.id == uid } }) { continuation.yield(user) }
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock { _ = self?.userListeners.removeValue(forKey: key) }
+            }
+        }
+    }
+
+    func observeFriends(of uid: UserID) -> AsyncStream<[User]> {
+        AsyncStream { continuation in
+            let key = UUID()
+            lock.withLock { friendListeners[key] = (uid, continuation) }
+            continuation.yield(snapshotFriends(of: uid))
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock { _ = self?.friendListeners.removeValue(forKey: key) }
+            }
+        }
+    }
+
+    func observeIncomingRequests(for uid: UserID) -> AsyncStream<[FriendRequest]> {
+        AsyncStream { continuation in
+            let key = UUID()
+            lock.withLock { requestListeners[key] = (uid, false, continuation) }
+            continuation.yield(snapshotRequests(uid, outgoing: false))
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+            }
+        }
+    }
+
+    func observeOutgoingRequests(from uid: UserID) -> AsyncStream<[FriendRequest]> {
+        AsyncStream { continuation in
+            let key = UUID()
+            lock.withLock { requestListeners[key] = (uid, true, continuation) }
+            continuation.yield(snapshotRequests(uid, outgoing: true))
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+            }
+        }
+    }
+
+    func observeAcceptedRequests(from uid: UserID) -> AsyncStream<[FriendRequest]> {
+        AsyncStream { continuation in
+            let key = UUID()
+            lock.withLock { acceptedListeners[key] = (uid, continuation) }
+            continuation.yield(snapshotAccepted(uid))
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock { _ = self?.acceptedListeners.removeValue(forKey: key) }
+            }
+        }
+    }
+
+    func participation(eventId: EventID, uid: UserID) async throws -> Participant? {
+        lock.withLock { details[eventId]?.participants.first { $0.id == uid } }
+    }
+
+    fileprivate func snapshotAccepted(_ uid: UserID) -> [FriendRequest] {
+        lock.withLock { accepted.filter { $0.fromUid == uid } }
+    }
+
+    func findUser(email: String) async throws -> User? {
+        try await Task.sleep(for: .milliseconds(350))
+        let address = email.trimmingCharacters(in: .whitespaces).lowercased()
+        return lock.withLock { users.first { $0.emailLower == address } }
+    }
+
+    /// Same guarantee as Firestore: one document per direction, whatever the
+    /// tap count.
+    func sendFriendRequest(from: UserID, to: UserID) async throws {
+        guard from != to else { return }
+        var reciprocal: FriendRequest?
+        lock.withLock {
+            let alreadyFriends = users.first { $0.id == from }?.friendIds.contains(to) ?? false
+            guard !alreadyFriends else { return }
+            reciprocal = requests.first { $0.fromUid == to && $0.toUid == from }
+            guard reciprocal == nil else { return }
+            let id = "\(from)_\(to)"
+            guard !requests.contains(where: { $0.id == id }) else { return }
+            requests.append(FriendRequest(id: id, fromUid: from, toUid: to,
+                                          status: .pending, createdAt: .now, respondedAt: nil))
+        }
+        if let reciprocal {
+            try await acceptFriendRequest(reciprocal)
+        } else {
+            notifyFriends()
+        }
+    }
+
+    func acceptFriendRequest(_ request: FriendRequest) async throws {
+        lock.withLock {
+            requests.removeAll { $0.id == request.id }
+            var settled = request
+            settled.status = .accepted
+            settled.respondedAt = .now
+            accepted.append(settled)
+            link(request.fromUid, request.toUid)
+        }
+        notifyFriends()
+    }
+
+    func ignoreFriendRequest(_ request: FriendRequest) async throws {
+        lock.withLock { requests.removeAll { $0.id == request.id } }
+        notifyFriends()
+    }
+
+    func removeFriend(uid: UserID, friend: UserID) async throws {
+        lock.withLock {
+            unlink(uid, friend)
+        }
+        notifyFriends()
+    }
+
+    // MARK: Plumbing
+
+    private func link(_ a: UserID, _ b: UserID) {
+        for (index, user) in users.enumerated() {
+            if user.id == a, !user.friendIds.contains(b) { users[index].friendIds.append(b) }
+            if user.id == b, !user.friendIds.contains(a) { users[index].friendIds.append(a) }
+        }
+    }
+
+    private func unlink(_ a: UserID, _ b: UserID) {
+        for (index, user) in users.enumerated() {
+            if user.id == a { users[index].friendIds.removeAll { $0 == b } }
+            if user.id == b { users[index].friendIds.removeAll { $0 == a } }
+        }
+    }
+
+    private func snapshotFriends(of uid: UserID) -> [User] {
+        lock.withLock {
+            guard let me = users.first(where: { $0.id == uid }) else { return [] }
+            return users.filter { me.friendIds.contains($0.id) }.sorted { $0.username < $1.username }
+        }
+    }
+
+    private func snapshotRequests(_ uid: UserID, outgoing: Bool) -> [FriendRequest] {
+        lock.withLock {
+            requests.filter { outgoing ? $0.fromUid == uid : $0.toUid == uid }
+        }
+    }
+
+    private func notifyFriends() {
+        let (friendTargets, requestTargets, userTargets) = lock.withLock {
+            (friendListeners.values.map { ($0.0, $0.1) },
+             requestListeners.values.map { ($0.0, $0.1, $0.2) },
+             userListeners.values.map { $0 })
+        }
+        for (uid, continuation) in friendTargets { continuation.yield(snapshotFriends(of: uid)) }
+        for (uid, outgoing, continuation) in requestTargets {
+            continuation.yield(snapshotRequests(uid, outgoing: outgoing))
+        }
+        let acceptedTargets = lock.withLock { acceptedListeners.values.map { ($0.0, $0.1) } }
+        for (uid, continuation) in acceptedTargets { continuation.yield(snapshotAccepted(uid)) }
+        let everyone = lock.withLock { users }
+        for continuation in userTargets {
+            if let first = everyone.first { continuation.yield(first) }
+        }
     }
 }

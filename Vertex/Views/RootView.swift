@@ -48,13 +48,13 @@ struct SignedInView: View {
         self.user = user
         self.onSignOut = onSignOut
         _events = State(initialValue: EventListModel(repository: services.events, uid: user.id))
-        _directory = State(initialValue: DirectoryModel(directory: services.directory))
+        _directory = State(initialValue: DirectoryModel(directory: services.directory, uid: user.id))
     }
 
     var body: some View {
-        UpcomingView(
+        MainTabView(
             services: services,
-            currentUser: user,
+            user: user,
             events: events,
             directory: directory,
             onSignOut: onSignOut

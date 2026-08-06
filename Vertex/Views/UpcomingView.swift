@@ -6,10 +6,10 @@ struct UpcomingView: View {
     var currentUser: User = MockData.ivy
     var events: EventListModel?
     var directory: DirectoryModel?
+    @Binding var selectedTab: Tab
     var onSignOut: () -> Void = {}
-    var unreadNotifications: Int = MockData.unreadNotificationCount
+    var unreadNotifications: Int = 0
 
-    @State private var selectedTab: Tab = .upcoming
     @State private var planning = false
     @State private var openEventId: EventID?
     /// The full detail for whatever Upcoming is counting down to. The list query

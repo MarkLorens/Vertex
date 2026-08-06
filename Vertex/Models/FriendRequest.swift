@@ -8,6 +8,8 @@ struct FriendRequest: Identifiable, Codable, Hashable {
     var toUid: UserID
     var status: Status
     var createdAt: Date
+    /// When it was accepted or ignored. Drives the "X is now your friend" row.
+    var respondedAt: Date?
 
     enum Status: String, Codable, CaseIterable {
         case pending, accepted, ignored

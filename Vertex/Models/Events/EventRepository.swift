@@ -34,9 +34,28 @@ protocol EventRepository: Sendable {
     func leave(eventId: EventID, uid: UserID) async throws
 }
 
-/// Who you can invite. A stand-in until there's a friends system — right now it
-/// lists everyone with an account, which is what makes two-device testing
-/// possible without building friend requests first.
+/// People. `observeUsers` is every account — still what the invite step reads,
+/// since it predates friends existing. `observeFriends` is the real list, and is
+/// what turn 6 is built on.
 protocol UserDirectory: Sendable {
     func observeUsers() -> AsyncStream<[User]>
+    func observeUser(_ uid: UserID) -> AsyncStream<User>
+    func observeFriends(of uid: UserID) -> AsyncStream<[User]>
+    /// Outstanding requests aimed at this person.
+    func observeIncomingRequests(for uid: UserID) -> AsyncStream<[FriendRequest]>
+    /// Requests this person has sent and nobody has answered yet.
+    func observeOutgoingRequests(from uid: UserID) -> AsyncStream<[FriendRequest]>
+    /// Requests this person sent that were accepted — "X is now your friend".
+    func observeAcceptedRequests(from uid: UserID) -> AsyncStream<[FriendRequest]>
+    /// This person's own record on one event, read once.
+    func participation(eventId: EventID, uid: UserID) async throws -> Participant?
+
+    /// Search is by address because usernames are deliberately non-unique.
+    func findUser(email: String) async throws -> User?
+    func sendFriendRequest(from: UserID, to: UserID) async throws
+    /// Adds each to the other's `friendIds` and closes the request.
+    func acceptFriendRequest(_ request: FriendRequest) async throws
+    func ignoreFriendRequest(_ request: FriendRequest) async throws
+    /// Mutual — dropping someone drops you from their list too.
+    func removeFriend(uid: UserID, friend: UserID) async throws
 }

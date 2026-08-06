@@ -280,6 +280,10 @@ extension DesignTokens {
         static let titleLarge = TextStyle(.system(size: 32, weight: .bold), tracking: -0.8)
         /// 30pt / bold / -0.7 · line-height 1.12. Section headline.
         static let title = TextStyle(.system(size: 30, weight: .bold), tracking: -0.7)
+        /// 28pt / bold / -0.7 · line-height 1.12. The headline on a modal sheet.
+        static let titleMedium = TextStyle(.system(size: 28, weight: .bold), tracking: -0.7)
+        /// 24pt / bold / -0.5. Your own name on Profile.
+        static let titleTiny = TextStyle(.system(size: 24, weight: .bold), tracking: -0.5)
         /// 26pt / semibold (680) / -0.6. Card headline.
         static let titleSmall = TextStyle(.system(size: 26, weight: .semibold), tracking: -0.6)
         /// 23pt / semibold (680) / -0.5 · line-height 1.2. Event name on a card.
@@ -342,6 +346,12 @@ extension DesignTokens {
         static let avatarInitials = TextStyle(.system(size: 11.5, weight: .semibold))
         /// 11pt / semibold. Calendar weekday headers.
         static let micro = TextStyle(.system(size: 11, weight: .semibold))
+
+        /// Email addresses are set in a monospaced face throughout turn 6 —
+        /// they're identifiers, and the design leans on that to say so.
+        static func mono(_ size: CGFloat) -> TextStyle {
+            TextStyle(.system(size: size, design: .monospaced), tracking: -0.1)
+        }
 
         // MARK: Uppercase labels — set the text uppercased at the call site
 

@@ -69,25 +69,43 @@ final class EventListModel {
 @Observable
 final class DirectoryModel {
     private(set) var users: [User] = []
+    private(set) var friends: [User] = []
+    private(set) var incomingRequests: [FriendRequest] = []
 
     private let directory: UserDirectory
-    private var subscription: Task<Void, Never>?
+    private let uid: UserID
+    private var subscriptions: [Task<Void, Never>] = []
 
-    init(directory: UserDirectory) {
+    init(directory: UserDirectory, uid: UserID) {
         self.directory = directory
+        self.uid = uid
     }
 
     func connect() {
-        guard subscription == nil else { return }
-        subscription = Task { [weak self, directory] in
-            for await users in directory.observeUsers() {
-                guard !Task.isCancelled else { return }
-                await MainActor.run { self?.users = users }
-            }
-        }
+        guard subscriptions.isEmpty else { return }
+        subscriptions = [
+            Task { [weak self, directory] in
+                for await users in directory.observeUsers() {
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run { self?.users = users }
+                }
+            },
+            Task { [weak self, directory, uid] in
+                for await friends in directory.observeFriends(of: uid) {
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run { self?.friends = friends }
+                }
+            },
+            Task { [weak self, directory, uid] in
+                for await requests in directory.observeIncomingRequests(for: uid) {
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run { self?.incomingRequests = requests }
+                }
+            },
+        ]
     }
 
-    deinit { subscription?.cancel() }
+    deinit { subscriptions.forEach { $0.cancel() } }
 
     func others(than uid: UserID) -> [User] {
         users.filter { $0.id != uid }.sorted { $0.username < $1.username }

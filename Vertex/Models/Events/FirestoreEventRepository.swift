@@ -219,3 +219,171 @@ final class FirestoreEventRepository: EventRepository, UserDirectory, @unchecked
         try await batch.commit()
     }
 }
+
+// MARK: - Friends
+
+extension FirestoreEventRepository {
+
+    func observeUser(_ uid: UserID) -> AsyncStream<User> {
+        AsyncStream { continuation in
+            let registration = Firestore.firestore().collection("users").document(uid)
+                .addSnapshotListener { snapshot, _ in
+                    guard let user = try? snapshot?.data(as: User.self) else { return }
+                    continuation.yield(user)
+                }
+            continuation.onTermination = { _ in registration.remove() }
+        }
+    }
+
+    /// Follows the friend *ids* on your own document, then re-reads whoever is
+    /// on that list. Two hops, but it means a friend renaming themselves shows
+    /// up without anyone writing to your record.
+    func observeFriends(of uid: UserID) -> AsyncStream<[User]> {
+        AsyncStream { continuation in
+            let store = Firestore.firestore()
+            let registration = store.collection("users").document(uid)
+                .addSnapshotListener { snapshot, _ in
+                    guard let me = try? snapshot?.data(as: User.self) else { return }
+                    guard !me.friendIds.isEmpty else {
+                        continuation.yield([])
+                        return
+                    }
+                    Task {
+                        // `in` queries cap at 30 values, so ask in chunks.
+                        var found: [User] = []
+                        for chunk in stride(from: 0, to: me.friendIds.count, by: 30) {
+                            let slice = Array(me.friendIds[chunk..<min(chunk + 30, me.friendIds.count)])
+                            let page = try? await store.collection("users")
+                                .whereField(FieldPath.documentID(), in: slice).getDocuments()
+                            found += page?.documents.compactMap { try? $0.data(as: User.self) } ?? []
+                        }
+                        continuation.yield(found.sorted { $0.username < $1.username })
+                    }
+                }
+            continuation.onTermination = { _ in registration.remove() }
+        }
+    }
+
+    func observeIncomingRequests(for uid: UserID) -> AsyncStream<[FriendRequest]> {
+        requests(matching: "toUid", uid)
+    }
+
+    func observeOutgoingRequests(from uid: UserID) -> AsyncStream<[FriendRequest]> {
+        requests(matching: "fromUid", uid)
+    }
+
+    /// Requests this person sent that were accepted — the source of the
+    /// "X is now your friend" row.
+    func observeAcceptedRequests(from uid: UserID) -> AsyncStream<[FriendRequest]> {
+        AsyncStream { continuation in
+            let registration = Firestore.firestore().collection("friendRequests")
+                .whereField("fromUid", isEqualTo: uid)
+                .whereField("status", isEqualTo: FriendRequest.Status.accepted.rawValue)
+                .addSnapshotListener { snapshot, _ in
+                    let requests = snapshot?.documents.compactMap { try? $0.data(as: FriendRequest.self) } ?? []
+                    continuation.yield(requests.sorted { ($0.respondedAt ?? $0.createdAt) > ($1.respondedAt ?? $1.createdAt) })
+                }
+            continuation.onTermination = { _ in registration.remove() }
+        }
+    }
+
+    /// My own participant record on one event, read once. Cheaper than a
+    /// collection-group query, which would need an index created by hand.
+    func participation(eventId: EventID, uid: UserID) async throws -> Participant? {
+        let snapshot = try await Firestore.firestore()
+            .collection("events").document(eventId)
+            .collection("participants").document(uid).getDocument()
+        guard snapshot.exists else { return nil }
+        return try snapshot.data(as: Participant.self)
+    }
+
+    private func requests(matching field: String, _ uid: UserID) -> AsyncStream<[FriendRequest]> {
+        AsyncStream { continuation in
+            let registration = Firestore.firestore().collection("friendRequests")
+                .whereField(field, isEqualTo: uid)
+                .whereField("status", isEqualTo: FriendRequest.Status.pending.rawValue)
+                .addSnapshotListener { snapshot, _ in
+                    let requests = snapshot?.documents.compactMap { try? $0.data(as: FriendRequest.self) } ?? []
+                    continuation.yield(requests.sorted { $0.createdAt > $1.createdAt })
+                }
+            continuation.onTermination = { _ in registration.remove() }
+        }
+    }
+
+    func findUser(email: String) async throws -> User? {
+        let address = email.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !address.isEmpty else { return nil }
+        let matches = try await Firestore.firestore().collection("users")
+            .whereField("emailLower", isEqualTo: address).limit(to: 1).getDocuments()
+        return matches.documents.compactMap { try? $0.data(as: User.self) }.first
+    }
+
+    /// Bounded by construction: the id is `{from}_{to}`, so however many times
+    /// Add is pressed there is exactly one document per direction — spamming
+    /// rewrites it rather than piling up. The checks in front of that stop it
+    /// resurrecting a settled request or shadowing one already coming the
+    /// other way.
+    func sendFriendRequest(from: UserID, to: UserID) async throws {
+        guard from != to else { return }
+        let store = Firestore.firestore()
+
+        // Already friends — nothing to ask for.
+        if let me = try? await store.collection("users").document(from).getDocument(),
+           let user = try? me.data(as: User.self), user.friendIds.contains(to) {
+            return
+        }
+
+        // They asked first: accept theirs instead of leaving two crossed
+        // requests that each need answering.
+        let reciprocalId = "\(to)_\(from)"
+        if let snapshot = try? await store.collection("friendRequests").document(reciprocalId).getDocument(),
+           let theirs = try? snapshot.data(as: FriendRequest.self), theirs.status == .pending {
+            try await acceptFriendRequest(theirs)
+            return
+        }
+
+        let id = "\(from)_\(to)"
+        let document = store.collection("friendRequests").document(id)
+        if let snapshot = try? await document.getDocument(),
+           let existing = try? snapshot.data(as: FriendRequest.self), existing.status == .pending {
+            return
+        }
+        let request = FriendRequest(id: id, fromUid: from, toUid: to, status: .pending,
+                                    createdAt: .now, respondedAt: nil)
+        try document.setData(from: request)
+    }
+
+    func acceptFriendRequest(_ request: FriendRequest) async throws {
+        let store = Firestore.firestore()
+        let batch = store.batch()
+        batch.updateData(["friendIds": FieldValue.arrayUnion([request.fromUid])],
+                         forDocument: store.collection("users").document(request.toUid))
+        batch.updateData(["friendIds": FieldValue.arrayUnion([request.toUid])],
+                         forDocument: store.collection("users").document(request.fromUid))
+        batch.updateData([
+            "status": FriendRequest.Status.accepted.rawValue,
+            "respondedAt": Timestamp(date: .now),
+        ], forDocument: store.collection("friendRequests").document(request.id))
+        try await batch.commit()
+    }
+
+    func ignoreFriendRequest(_ request: FriendRequest) async throws {
+        try await Firestore.firestore().collection("friendRequests").document(request.id)
+            .updateData([
+                "status": FriendRequest.Status.ignored.rawValue,
+                "respondedAt": Timestamp(date: .now),
+            ])
+    }
+
+    /// Mutual, so it takes two writes. A one-sided removal would leave you on
+    /// their list and them off yours.
+    func removeFriend(uid: UserID, friend: UserID) async throws {
+        let store = Firestore.firestore()
+        let batch = store.batch()
+        batch.updateData(["friendIds": FieldValue.arrayRemove([friend])],
+                         forDocument: store.collection("users").document(uid))
+        batch.updateData(["friendIds": FieldValue.arrayRemove([uid])],
+                         forDocument: store.collection("users").document(friend))
+        try await batch.commit()
+    }
+}
