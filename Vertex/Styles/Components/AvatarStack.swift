@@ -1,16 +1,61 @@
 import SwiftUI
 
-struct Avatar: Identifiable {
-    let id = UUID()
+struct Avatar: Identifiable, Hashable {
+    /// The person's uid where there is one. A fresh UUID per render would churn
+    /// `ForEach` identity every time a stack is rebuilt from model data.
+    let id: String
     let initials: String
-    /// Index into `DesignTokens.Palette.avatar`, wrapped. In real use this
-    /// should come from a stable hash of the person, not their position in
-    /// the list — the colour has to survive the group being re-sorted.
+    /// Index into `DesignTokens.Palette.avatar`, wrapped.
     let colorIndex: Int
+
+    init(id: String? = nil, initials: String, colorIndex: Int) {
+        self.id = id ?? initials
+        self.initials = initials
+        self.colorIndex = colorIndex
+    }
 
     var color: Color {
         let palette = DesignTokens.Palette.avatar
         return palette[abs(colorIndex) % palette.count]
+    }
+}
+
+struct AvatarView: View {
+    let avatar: Avatar
+    var diameter: CGFloat = DesignTokens.Size.Avatar.xlarge
+    /// The colour the separating ring is cut in. Nil for avatars that stand
+    /// alone — only overlapping stacks need to be told apart.
+    var ringColor: Color?
+
+    var body: some View {
+        Text(avatar.initials)
+            .font(.system(size: Self.initialsSize(for: diameter), weight: .semibold))
+            .foregroundStyle(DesignTokens.Colors.onField)
+            .frame(width: diameter, height: diameter)
+            .background(avatar.color, in: .circle)
+            .ringed(ringColor, diameter: diameter)
+    }
+
+    /// The doc sets initials at roughly 38% of the circle — 11.5pt at 30, 10.5
+    /// at 28, 9.5 at 24. A fixed size looks bloated on the smaller avatars.
+    static func initialsSize(for diameter: CGFloat) -> CGFloat {
+        (diameter * 0.385).rounded(.toNearestOrEven)
+    }
+}
+
+/// A "+3" chip closing an avatar stack.
+struct AvatarOverflow: View {
+    let count: Int
+    var diameter: CGFloat = DesignTokens.Size.Avatar.xlarge
+    var ringColor: Color?
+
+    var body: some View {
+        Text("+\(count)")
+            .font(.system(size: AvatarView.initialsSize(for: diameter) - 0.5, weight: .semibold))
+            .foregroundStyle(DesignTokens.Colors.inkStrong)
+            .frame(width: diameter, height: diameter)
+            .background(DesignTokens.Colors.avatarEmpty, in: .circle)
+            .ringed(ringColor, diameter: diameter)
     }
 }
 
@@ -20,60 +65,53 @@ struct AvatarStack: View {
     /// Anyone past this many becomes a "+n" chip.
     var visibleLimit: Int = 4
     var diameter: CGFloat = DesignTokens.Size.Avatar.xlarge
-    /// The colour the separating ring is cut in — whatever the stack sits on.
     var ringColor: Color = DesignTokens.Colors.sheet
 
     private var visible: [Avatar] { Array(avatars.prefix(visibleLimit)) }
     private var overflow: Int { max(0, avatars.count - visibleLimit) }
 
-    /// 2pt at 30pt across, 1.5pt at the smaller sizes the doc uses elsewhere.
-    private var ringWidth: CGFloat { diameter >= 30 ? 2 : DesignTokens.Size.Avatar.ringWidth }
+    private var overlap: CGFloat {
+        diameter >= 28 ? DesignTokens.Size.Avatar.overlapLarge : DesignTokens.Size.Avatar.overlap
+    }
 
     var body: some View {
-        HStack(spacing: DesignTokens.Size.Avatar.overlapLarge) {
+        HStack(spacing: overlap) {
             ForEach(visible) { avatar in
-                circle(fill: avatar.color) {
-                    Text(avatar.initials)
-                        .textStyle(DesignTokens.Typography.avatarInitials)
-                        .foregroundStyle(DesignTokens.Colors.onField)
-                }
+                AvatarView(avatar: avatar, diameter: diameter, ringColor: ringColor)
             }
             if overflow > 0 {
-                circle(fill: DesignTokens.Colors.avatarEmpty) {
-                    Text("+\(overflow)")
-                        // A point smaller than initials so "+2" doesn't crowd the ring.
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(DesignTokens.Colors.inkStrong)
-                }
+                AvatarOverflow(count: overflow, diameter: diameter, ringColor: ringColor)
             }
         }
     }
+}
 
-    private func circle<Label: View>(fill: Color, @ViewBuilder label: () -> Label) -> some View {
-        label()
-            .frame(width: diameter, height: diameter)
-            .background(fill, in: .circle)
-            // The ring sits outside the colour, as the doc's CSS border does —
-            // inset it and every avatar loses 2×ringWidth of its diameter.
-            .padding(ringWidth)
-            .background(ringColor, in: .circle)
+private extension View {
+    /// The ring sits outside the colour, as the doc's CSS border does — inset it
+    /// and every avatar loses 2×ringWidth of its diameter.
+    @ViewBuilder
+    func ringed(_ color: Color?, diameter: CGFloat) -> some View {
+        if let color {
+            let width: CGFloat = diameter >= 30 ? 2 : DesignTokens.Size.Avatar.ringWidth
+            self.padding(width).background(color, in: .circle)
+        } else {
+            self
+        }
     }
 }
 
 #Preview {
-    HStack(spacing: DesignTokens.Spacing.huge) {
+    VStack(spacing: DesignTokens.Spacing.huge) {
         AvatarStack(avatars: [
-            Avatar(initials: "SR", colorIndex: 1),
-            Avatar(initials: "JM", colorIndex: 3),
-            Avatar(initials: "TO", colorIndex: 5),
-            Avatar(initials: "AK", colorIndex: 7),
-            Avatar(initials: "NB", colorIndex: 0),
-            Avatar(initials: "DP", colorIndex: 2),
+            Avatar(initials: "SR", colorIndex: 1), Avatar(initials: "JM", colorIndex: 3),
+            Avatar(initials: "TO", colorIndex: 5), Avatar(initials: "AK", colorIndex: 7),
+            Avatar(initials: "NB", colorIndex: 0), Avatar(initials: "DP", colorIndex: 2),
         ])
-        AvatarStack(
-            avatars: [Avatar(initials: "SR", colorIndex: 1), Avatar(initials: "JM", colorIndex: 3)],
-            diameter: DesignTokens.Size.Avatar.medium
-        )
+        HStack(spacing: DesignTokens.Spacing.md) {
+            AvatarView(avatar: Avatar(initials: "RK", colorIndex: 4), diameter: 38)
+            AvatarView(avatar: Avatar(initials: "DP", colorIndex: 2), diameter: 28)
+            AvatarView(avatar: Avatar(initials: "NB", colorIndex: 0), diameter: 22)
+        }
     }
     .padding()
     .background(DesignTokens.Colors.sheet)

@@ -280,6 +280,10 @@ extension DesignTokens {
         static let titleLarge = TextStyle(.system(size: 32, weight: .bold), tracking: -0.8)
         /// 30pt / bold / -0.7 · line-height 1.12. Section headline.
         static let title = TextStyle(.system(size: 30, weight: .bold), tracking: -0.7)
+        /// 28pt / bold / -0.7 · line-height 1.12. The headline on a modal sheet.
+        static let titleMedium = TextStyle(.system(size: 28, weight: .bold), tracking: -0.7)
+        /// 24pt / bold / -0.5. Your own name on Profile.
+        static let titleTiny = TextStyle(.system(size: 24, weight: .bold), tracking: -0.5)
         /// 26pt / semibold (680) / -0.6. Card headline.
         static let titleSmall = TextStyle(.system(size: 26, weight: .semibold), tracking: -0.6)
         /// 23pt / semibold (680) / -0.5 · line-height 1.2. Event name on a card.
@@ -299,6 +303,10 @@ extension DesignTokens {
         static let bodyLargeStrong = TextStyle(.system(size: 16.5, weight: .semibold), tracking: -0.3)
         /// 16.5pt / regular / -0.3. Field values and long-form body.
         static let bodyLarge = TextStyle(.system(size: 16.5, weight: .regular), tracking: -0.3)
+        /// 18pt / regular / -0.3. The value typed into an underlined input field.
+        static let fieldValue = TextStyle(.system(size: 18, weight: .regular), tracking: -0.3)
+        /// 16pt / regular / -0.3. Settings rows and search placeholders.
+        static let bodyPlain = TextStyle(.system(size: 16, weight: .regular), tracking: -0.3)
         /// 16pt / semibold / -0.2. Nav bar title.
         static let navTitle = TextStyle(.system(size: 16, weight: .semibold), tracking: -0.2)
         /// 16pt / medium (500) / -0.2. Body.
@@ -314,6 +322,8 @@ extension DesignTokens {
         static let callout = TextStyle(.system(size: 15, weight: .medium), tracking: -0.2)
         /// 14.5pt / semibold (650) / -0.2. The label on a half-width button.
         static let footnoteStrong = TextStyle(.system(size: 14.5, weight: .semibold), tracking: -0.2)
+        /// 14.5pt / medium (550) / -0.2. An unselected choice chip.
+        static let footnoteMedium = TextStyle(.system(size: 14.5, weight: .medium), tracking: -0.2)
         /// 14.5pt / regular / -0.2. Footnote.
         static let footnote = TextStyle(.system(size: 14.5, weight: .regular), tracking: -0.2)
         /// 14pt / semibold (650) / -0.1. An inline text action ("Nudge", "Plan").
@@ -334,6 +344,14 @@ extension DesignTokens {
         static let caption3 = TextStyle(.system(size: 12.5, weight: .semibold))
         /// 11.5pt / semibold (650) / 0. Initials inside an avatar.
         static let avatarInitials = TextStyle(.system(size: 11.5, weight: .semibold))
+        /// 11pt / semibold. Calendar weekday headers.
+        static let micro = TextStyle(.system(size: 11, weight: .semibold))
+
+        /// Email addresses are set in a monospaced face throughout turn 6 —
+        /// they're identifiers, and the design leans on that to say so.
+        static func mono(_ size: CGFloat) -> TextStyle {
+            TextStyle(.system(size: size, design: .monospaced), tracking: -0.1)
+        }
 
         // MARK: Uppercase labels — set the text uppercased at the call site
 

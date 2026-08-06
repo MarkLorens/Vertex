@@ -1,0 +1,110 @@
+import SwiftUI
+
+/// 3a — name it, say roughly where, say how long. Dates come later.
+struct CreateEventView: View {
+    @Bindable var draft: EventDraft
+    var onCancel: () -> Void = {}
+    var onNext: () -> Void = {}
+
+    @FocusState private var focus: Field?
+    private enum Field { case name, place }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHandle().padding(.bottom, DesignTokens.Spacing.md)
+
+            StepNav(
+                leading: "Cancel", trailing: "Next", step: 0, stepCount: 3,
+                trailingEnabled: draft.canLeaveDetails,
+                onLeading: onCancel, onTrailing: onNext
+            )
+            .padding(.horizontal, DesignTokens.Layout.screenPadding)
+
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                Text("What's the plan?")
+                    .textStyle(DesignTokens.Typography.title)
+                    .foregroundStyle(DesignTokens.Colors.onField)
+                Text("Dates come later — the group sorts that out.")
+                    .textStyle(DesignTokens.Typography.callout)
+                    .foregroundStyle(DesignTokens.Colors.onFieldMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, DesignTokens.Layout.fieldPadding)
+            .padding(.top, 22)
+            .padding(.bottom, DesignTokens.Spacing.huge)
+
+            SheetSurface {
+                Text("Event name")
+                    .textStyle(DesignTokens.Typography.eyebrow)
+                    .foregroundStyle(DesignTokens.Colors.inkSubtle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, DesignTokens.Spacing.md)
+
+                TextField("Camping weekend", text: $draft.name)
+                    .textStyle(DesignTokens.Typography.titleSmall)
+                    .foregroundStyle(DesignTokens.Colors.ink)
+                    .tint(DesignTokens.Colors.accent)
+                    .focused($focus, equals: .name)
+                    .padding(.bottom, DesignTokens.Spacing.xl)
+                    .overlay(alignment: .bottom) {
+                        DesignTokens.Colors.accent.frame(height: 1.5)
+                    }
+
+                Text("Where")
+                    .textStyle(DesignTokens.Typography.eyebrow)
+                    .foregroundStyle(DesignTokens.Colors.inkSubtle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 26)
+                    .padding(.bottom, DesignTokens.Spacing.md)
+
+                HStack(spacing: 9) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(DesignTokens.Colors.ink.opacity(0.3))
+                    TextField("Somewhere in the Peaks", text: $draft.place)
+                        .textStyle(DesignTokens.Typography.fieldValue)
+                        .foregroundStyle(DesignTokens.Colors.ink)
+                        .tint(DesignTokens.Colors.accent)
+                        .focused($focus, equals: .place)
+                }
+                .padding(.bottom, DesignTokens.Spacing.xl)
+                .overlay(alignment: .bottom) {
+                    DesignTokens.Colors.border.frame(height: 1)
+                }
+
+                Text("How long")
+                    .textStyle(DesignTokens.Typography.eyebrow)
+                    .foregroundStyle(DesignTokens.Colors.inkSubtle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 26)
+                    .padding(.bottom, DesignTokens.Spacing.lg)
+
+                FlowRow(spacing: DesignTokens.Spacing.md) {
+                    ForEach(Event.Duration.allCases, id: \.self) { duration in
+                        ChoiceChip(title: duration.label, isSelected: draft.duration == duration) {
+                            draft.duration = duration
+                        }
+                    }
+                }
+
+                Spacer(minLength: DesignTokens.Spacing.huge)
+
+                ButtonPrimary("Next · Invite friends", icon: "chevron.right", iconEdge: .trailing, action: onNext)
+                    .disabled(!draft.canLeaveDetails)
+            }
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .padding(.top, DesignTokens.Layout.fieldTopInset)
+        .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .onAppear { focus = .name }
+    }
+}
+
+#Preview {
+    CreateEventView(draft: {
+        let d = EventDraft(organiserId: MockData.ivy.id)
+        d.name = "Camping weekend"
+        d.duration = .weekend
+        return d
+    }())
+}
