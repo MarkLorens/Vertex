@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct UpcomingEventCardEmpty: View {
+    var onStartPlanning: () -> Void = {}
+
     var body: some View {
         VStack(spacing: DesignTokens.Spacing.xxl) {
-            ButtonPrimary("Start Planning", icon: "plus") {}
+            ButtonPrimary("Start Planning", icon: "plus", action: onStartPlanning)
 
             Text("Or check if there's anything going down in Your Events")
                 .textStyle(DesignTokens.Typography.footnoteSmall)

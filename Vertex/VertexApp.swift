@@ -6,21 +6,33 @@
 //
 
 import SwiftUI
-//import FirebaseCore
-//
-//class appDelegate: NSObject, UIApplicationDelegate {
-//    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-//        FirebaseApp.configure()
-//        return true
-//    }
-//}
+import FirebaseCore
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        FirebaseApp.configure()
+        return true
+    }
+}
+
+extension Services {
+    /// The composition root — the one place that knows Firebase exists.
+    static var live: Services {
+        let repository = FirestoreEventRepository()
+        return Services(auth: FirebaseAuthService(), events: repository, directory: repository)
+    }
+}
 
 @main
 struct VertexApp: App {
-//    @UIApplicationDelegateAdaptor(appDelegate.self) var delegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView(services: .live)
         }
     }
 }

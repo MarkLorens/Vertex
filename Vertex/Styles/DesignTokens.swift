@@ -299,6 +299,10 @@ extension DesignTokens {
         static let bodyLargeStrong = TextStyle(.system(size: 16.5, weight: .semibold), tracking: -0.3)
         /// 16.5pt / regular / -0.3. Field values and long-form body.
         static let bodyLarge = TextStyle(.system(size: 16.5, weight: .regular), tracking: -0.3)
+        /// 18pt / regular / -0.3. The value typed into an underlined input field.
+        static let fieldValue = TextStyle(.system(size: 18, weight: .regular), tracking: -0.3)
+        /// 16pt / regular / -0.3. Settings rows and search placeholders.
+        static let bodyPlain = TextStyle(.system(size: 16, weight: .regular), tracking: -0.3)
         /// 16pt / semibold / -0.2. Nav bar title.
         static let navTitle = TextStyle(.system(size: 16, weight: .semibold), tracking: -0.2)
         /// 16pt / medium (500) / -0.2. Body.
@@ -314,6 +318,8 @@ extension DesignTokens {
         static let callout = TextStyle(.system(size: 15, weight: .medium), tracking: -0.2)
         /// 14.5pt / semibold (650) / -0.2. The label on a half-width button.
         static let footnoteStrong = TextStyle(.system(size: 14.5, weight: .semibold), tracking: -0.2)
+        /// 14.5pt / medium (550) / -0.2. An unselected choice chip.
+        static let footnoteMedium = TextStyle(.system(size: 14.5, weight: .medium), tracking: -0.2)
         /// 14.5pt / regular / -0.2. Footnote.
         static let footnote = TextStyle(.system(size: 14.5, weight: .regular), tracking: -0.2)
         /// 14pt / semibold (650) / -0.1. An inline text action ("Nudge", "Plan").
@@ -334,6 +340,8 @@ extension DesignTokens {
         static let caption3 = TextStyle(.system(size: 12.5, weight: .semibold))
         /// 11.5pt / semibold (650) / 0. Initials inside an avatar.
         static let avatarInitials = TextStyle(.system(size: 11.5, weight: .semibold))
+        /// 11pt / semibold. Calendar weekday headers.
+        static let micro = TextStyle(.system(size: 11, weight: .semibold))
 
         // MARK: Uppercase labels — set the text uppercased at the call site
 

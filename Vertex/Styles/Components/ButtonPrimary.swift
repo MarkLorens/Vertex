@@ -13,10 +13,37 @@ struct ButtonPrimary: View {
         case small
     }
 
+    /// Same geometry throughout — only the fill changes. The doc uses all three
+    /// at 54/17: terracotta to confirm, ink for "Continue with Apple" and
+    /// "Finish voting", the red tint for "Cancel event".
+    enum Fill {
+        case accent, ink, destructive
+
+        var background: Color {
+            switch self {
+            case .accent: DesignTokens.Colors.accent
+            case .ink: DesignTokens.Colors.actionInk
+            case .destructive: DesignTokens.Colors.negativeTint
+            }
+        }
+
+        var label: Color {
+            switch self {
+            case .accent, .ink: DesignTokens.Colors.onField
+            case .destructive: DesignTokens.Colors.negativeInk
+            }
+        }
+
+        var border: Color? {
+            self == .destructive ? DesignTokens.Colors.negativeTintBorder : nil
+        }
+    }
+
     private let title: String
     private let icon: String?
     private let iconEdge: HorizontalEdge
     private let size: Size
+    private let fill: Fill
     private let action: () -> Void
 
     init(
@@ -24,12 +51,14 @@ struct ButtonPrimary: View {
         icon: String? = nil,
         iconEdge: HorizontalEdge = .leading,
         size: Size = .large,
+        fill: Fill = .accent,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.icon = icon
         self.iconEdge = iconEdge
         self.size = size
+        self.fill = fill
         self.action = action
     }
 
@@ -41,7 +70,7 @@ struct ButtonPrimary: View {
                 if iconEdge == .trailing { iconView }
             }
         }
-        .buttonStyle(ButtonPrimaryStyle(size: size))
+        .buttonStyle(ButtonPrimaryStyle(size: size, fill: fill))
     }
 
     @ViewBuilder
@@ -58,19 +87,25 @@ struct ButtonPrimary: View {
 struct ButtonPrimaryStyle: ButtonStyle {
 
     var size: ButtonPrimary.Size = .large
+    var fill: ButtonPrimary.Fill = .accent
 
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(isEnabled ? DesignTokens.Colors.onField : DesignTokens.Colors.inkFaint)
+            .foregroundStyle(isEnabled ? fill.label : DesignTokens.Colors.inkFaint)
             .padding(.horizontal, size.horizontalPadding)
             .frame(maxWidth: size.fillsWidth ? .infinity : nil)
             .frame(height: size.height)
             .background(
-                isEnabled ? DesignTokens.Colors.accent : DesignTokens.Colors.separator,
+                isEnabled ? fill.background : DesignTokens.Colors.separator,
                 in: size.shape
             )
+            .overlay {
+                if isEnabled, let border = fill.border {
+                    size.shape.stroke(border, lineWidth: 1)
+                }
+            }
             // `.small` is the only size the doc lets hug its label; the others
             // are laid out full width by their container.
             .fixedSize(horizontal: !size.fillsWidth, vertical: false)
