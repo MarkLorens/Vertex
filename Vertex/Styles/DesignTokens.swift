@@ -172,6 +172,8 @@ extension DesignTokens {
         static let onFieldTrack = Color.white.opacity(0.25)
         /// A translucent surface over the field.
         static let onFieldSurface = Color.white.opacity(0.16)
+        /// The trough of a segmented control over the field.
+        static let onFieldSurfaceStrong = Color.white.opacity(0.20)
 
         // MARK: Actions
 
@@ -339,11 +341,15 @@ extension DesignTokens {
         static let caption = TextStyle(.system(size: 13.5, weight: .regular), tracking: -0.1)
         /// 13pt / regular / -0.1 · line-height 1.4. Fine print and disclaimers.
         static let caption2 = TextStyle(.system(size: 13, weight: .regular), tracking: -0.1)
+        /// 13pt / semibold (680) / -0.2. The relative-date column on a settled event row.
+        static let caption2Strong = TextStyle(.system(size: 13, weight: .semibold), tracking: -0.2)
         /// 12.5pt / semibold (620) / 0. The smallest emphasised label, e.g. a status pill.
         /// The "OR" rule label is the one place the doc adds +0.3 tracking.
         static let caption3 = TextStyle(.system(size: 12.5, weight: .semibold))
         /// 11.5pt / semibold (650) / 0. Initials inside an avatar.
         static let avatarInitials = TextStyle(.system(size: 11.5, weight: .semibold))
+        /// 11.5pt / bold / 0. The count inside a selected segment.
+        static let countBadge = TextStyle(.system(size: 11.5, weight: .bold))
         /// 11pt / semibold. Calendar weekday headers.
         static let micro = TextStyle(.system(size: 11, weight: .semibold))
 
@@ -482,6 +488,8 @@ extension DesignTokens {
         static let button: CGFloat = 17
         /// 20pt — cards on the cream sheet.
         static let card: CGFloat = 20
+        /// 22pt — the taller vote cards on Your Events.
+        static let cardLarge: CGFloat = 22
         /// 30pt — the sheet's top corners.
         static let sheet: CGFloat = 30
         /// 48pt — the device frame, for previews.
@@ -510,6 +518,8 @@ extension DesignTokens {
         static let voteButton: CGFloat = 44
         /// 34pt — a pill-shaped action.
         static let pillHeight: CGFloat = 34
+        /// 32pt — an action pill inside a card.
+        static let actionHeight: CGFloat = 32
         /// 30pt — a compact chip.
         static let chipHeight: CGFloat = 30
         /// 28pt — an inline status pill.
@@ -564,6 +574,8 @@ extension DesignTokens {
         /// The only shadow in the committed screens: a card on the cream sheet.
         /// CSS `0 1px 2px rgba(23,20,15,.05)`.
         static let card = Shadow(color: Colors.fillSubtle, radius: 1, x: 0, y: 1)
+        /// The selected segment lifting off its trough. CSS `0 1px 3px rgba(0,0,0,.12)`.
+        static let segment = Shadow(color: .black.opacity(0.12), radius: 1.5, x: 0, y: 1)
         /// A sheet lifting off the screen. CSS `0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.05)`.
         static let sheet = Shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 8)
         /// A modal over a dimmed screen. CSS `0 24px 60px rgba(0,0,0,.3)`.

@@ -12,6 +12,9 @@ struct MainTabView: View {
     @State private var selectedTab: Tab = .upcoming
     @State private var route: Route?
     @State private var notifications: NotificationsModel
+    /// Owned here rather than by Your Events, so switching tabs doesn't tear
+    /// down and re-establish a listener per event.
+    @State private var details: EventDetailsModel
     @State private var pendingRequest: (FriendRequest, User)?
     @State private var pendingDecline: (Event, User?)?
     @State private var openEventId: EventID?
@@ -26,6 +29,7 @@ struct MainTabView: View {
         _notifications = State(initialValue: NotificationsModel(
             directory: services.directory, events: events, uid: user.id
         ))
+        _details = State(initialValue: EventDetailsModel(repository: services.events))
     }
 
     private enum Route: Identifiable {
@@ -90,12 +94,22 @@ struct MainTabView: View {
                 )
 
             case .yourEvents:
-                ComingSoonTab(tab: selectedTab, selection: $selectedTab,
-                              unread: notifications.badgeCount)
+                YourEventsView(
+                    services: services,
+                    currentUser: user,
+                    events: events,
+                    details: details,
+                    directory: directory,
+                    selectedTab: $selectedTab,
+                    unreadNotifications: notifications.badgeCount
+                )
             }
         }
         .task { notifications.connect() }
-        .task(id: events.events.map(\.id)) { await notifications.refreshParticipation() }
+        .task(id: events.events.map(\.id)) {
+            details.follow(events.events.map(\.id))
+            await notifications.refreshParticipation()
+        }
         .overlay {
             if let (request, sender) = pendingRequest {
                 FriendRequestDialog(
@@ -140,52 +154,6 @@ struct MainTabView: View {
                     friendIds: Set(directory.friends.map(\.id)),
                     onClose: { route = nil }
                 )
-            }
-        }
-    }
-}
-
-/// Placeholder for the two tabs that don't have screens yet — better than a tab
-/// that silently does nothing when you press it.
-struct ComingSoonTab: View {
-    let tab: Tab
-    @Binding var selection: Tab
-    var unread: Int = 0
-
-    var body: some View {
-        Screen {
-            VStack(spacing: 0) {
-                Text(tab.title)
-                    .textStyle(DesignTokens.Typography.titleLarge)
-                    .foregroundStyle(DesignTokens.Colors.onField)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, DesignTokens.Layout.screenPadding)
-                    .padding(.top, DesignTokens.Spacing.sm)
-
-                Spacer()
-
-                VStack(spacing: DesignTokens.Spacing.xl) {
-                    Image(systemName: "hammer")
-                        .font(.system(size: 34, weight: .light))
-                    Text("Not built yet")
-                        .textStyle(DesignTokens.Typography.bodyLargeStrong)
-                }
-                .foregroundStyle(DesignTokens.Colors.onFieldFaint)
-
-                Spacer()
-
-                VStack(spacing: 0) {
-                    Color.clear.frame(height: DesignTokens.Spacing.xxl)
-                    TabBar(selection: $selection, badges: [.notifications: unread])
-                }
-                .background {
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: DesignTokens.Radius.sheet,
-                        topTrailingRadius: DesignTokens.Radius.sheet
-                    )
-                    .fill(DesignTokens.Colors.sheet)
-                    .ignoresSafeArea(edges: .bottom)
-                }
             }
         }
     }

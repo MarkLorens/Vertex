@@ -65,6 +65,45 @@ final class EventListModel {
     }
 }
 
+/// The assembled detail for every event in the list, kept live. The list query
+/// only carries event documents; Your Events needs slots and participants for
+/// every row, not just the one it's counting down to.
+@Observable
+final class EventDetailsModel {
+    private(set) var details: [EventID: EventDetail] = [:]
+
+    private let repository: EventRepository
+    private var subscriptions: [EventID: Task<Void, Never>] = [:]
+
+    init(repository: EventRepository) {
+        self.repository = repository
+    }
+
+    func detail(_ id: EventID) -> EventDetail? { details[id] }
+
+    /// Subscribes to anything new and drops anything gone. Idempotent, so it can
+    /// be called on every change to the list.
+    @MainActor
+    func follow(_ ids: [EventID]) {
+        let wanted = Set(ids)
+        for (id, subscription) in subscriptions where !wanted.contains(id) {
+            subscription.cancel()
+            subscriptions[id] = nil
+            details[id] = nil
+        }
+        for id in wanted where subscriptions[id] == nil {
+            subscriptions[id] = Task { [weak self, repository] in
+                for await detail in repository.observeDetail(id) {
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run { self?.details[id] = detail }
+                }
+            }
+        }
+    }
+
+    deinit { subscriptions.values.forEach { $0.cancel() } }
+}
+
 /// Everyone with an account. Stands in for a friends list until there is one.
 @Observable
 final class DirectoryModel {

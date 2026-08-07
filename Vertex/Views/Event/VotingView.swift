@@ -122,23 +122,6 @@ struct SlotVoteCard: View {
     }
 }
 
-/// The white-on-field progress track above the slot list.
-struct ProgressTrack: View {
-    let fraction: Double
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(DesignTokens.Colors.onFieldTrack)
-                Capsule()
-                    .fill(DesignTokens.Colors.onField)
-                    .frame(width: proxy.size.width * min(1, max(0, fraction)))
-            }
-        }
-        .frame(height: DesignTokens.Size.Bar.progress)
-    }
-}
-
 enum SlotFormat {
     /// "Fri 12 — Sun 14 Sep", collapsing to one date when the slot is a single day.
     /// Weekday is formatted apart from day+month because most locales otherwise
@@ -148,6 +131,12 @@ enum SlotFormat {
             return "\(weekdayDay(slot.start)) \(slot.start.formatted(.dateTime.month(.abbreviated)))"
         }
         return "\(weekdayDay(slot.start)) — \(weekdayDay(slot.end)) \(slot.end.formatted(.dateTime.month(.abbreviated)))"
+    }
+
+    /// "Fri 12 Sep" — the start day alone. 2b's slot column is 62pt wide and a
+    /// whole weekend won't fit in it; the full span is on the event screen.
+    static func startDay(_ slot: Slot) -> String {
+        "\(weekdayDay(slot.start)) \(slot.start.formatted(.dateTime.month(.abbreviated)))"
     }
 
     static func weekdayDay(_ date: Date) -> String {
