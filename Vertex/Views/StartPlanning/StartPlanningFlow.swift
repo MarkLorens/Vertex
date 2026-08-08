@@ -93,7 +93,6 @@ struct StartPlanningFlow: View {
             id: eventId,
             name: draft.name.trimmingCharacters(in: .whitespaces),
             place: draft.place.trimmingCharacters(in: .whitespaces),
-            duration: draft.duration,
             organiserId: organiser.id,
             createdAt: .now,
             status: .voting,

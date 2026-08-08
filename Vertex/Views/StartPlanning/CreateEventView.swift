@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// 3a — name it, say roughly where, say how long. Dates come later.
+/// 3a — name it and say roughly where. When it runs is the group's to vote on,
+/// and how long it lasts isn't Vertex's business.
 struct CreateEventView: View {
     @Bindable var draft: EventDraft
     var onCancel: () -> Void = {}
@@ -72,21 +73,6 @@ struct CreateEventView: View {
                     DesignTokens.Colors.border.frame(height: 1)
                 }
 
-                Text("How long")
-                    .textStyle(DesignTokens.Typography.eyebrow)
-                    .foregroundStyle(DesignTokens.Colors.inkSubtle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 26)
-                    .padding(.bottom, DesignTokens.Spacing.lg)
-
-                FlowRow(spacing: DesignTokens.Spacing.md) {
-                    ForEach(Event.Duration.allCases, id: \.self) { duration in
-                        ChoiceChip(title: duration.label, isSelected: draft.duration == duration) {
-                            draft.duration = duration
-                        }
-                    }
-                }
-
                 Spacer(minLength: DesignTokens.Spacing.huge)
 
                 ButtonPrimary("Next · Invite friends", icon: "chevron.right", iconEdge: .trailing, action: onNext)
@@ -96,6 +82,7 @@ struct CreateEventView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, DesignTokens.Layout.fieldTopInset)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .dismissesKeyboardOnTap()
         .onAppear { focus = .name }
     }
 }
@@ -104,7 +91,6 @@ struct CreateEventView: View {
     CreateEventView(draft: {
         let d = EventDraft(organiserId: MockData.ivy.id)
         d.name = "Camping weekend"
-        d.duration = .weekend
         return d
     }())
 }

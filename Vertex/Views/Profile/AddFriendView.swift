@@ -78,6 +78,7 @@ struct AddFriendView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, DesignTokens.Layout.fieldTopInset)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .dismissesKeyboardOnTap()
         .onAppear {
             focused = true
             if !prefill.isEmpty, email.isEmpty {

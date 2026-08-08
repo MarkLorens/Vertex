@@ -140,6 +140,7 @@ struct AuthScaffold<Header: View, Sheet: View>: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, topInset)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .dismissesKeyboardOnTap()
     }
 }
 
