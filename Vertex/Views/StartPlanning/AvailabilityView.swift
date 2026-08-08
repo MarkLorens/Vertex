@@ -59,20 +59,49 @@ struct AvailabilityView: View {
     }
 
     private func rangeRow(_ range: ClosedRange<Date>) -> some View {
-        HStack(spacing: DesignTokens.Spacing.xl) {
+        let time = draft.time(for: range)
+        return HStack(spacing: DesignTokens.Spacing.xl) {
             Text(Self.label(for: range))
                 .textStyle(DesignTokens.Typography.calloutStrong)
                 .foregroundStyle(DesignTokens.Colors.ink)
             Spacer(minLength: 0)
-            // The doc's "from 5pm" — a per-range start time isn't collected yet.
-            Text("from 5pm")
-                .textStyle(DesignTokens.Typography.caption)
-                .foregroundStyle(DesignTokens.Colors.inkTertiary)
+
+            // The doc shows a flat "from 5pm" here. Each range carries its own
+            // hours, because a Friday evening and a Saturday all-day aren't the
+            // same offer.
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                hourMenu(time.startHour) {
+                    draft.setTime(TimeRange(startHour: $0, endHour: time.endHour), for: range)
+                }
+                Text("—")
+                    .textStyle(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.inkFaint)
+                hourMenu(time.endHour) {
+                    draft.setTime(TimeRange(startHour: time.startHour, endHour: $0), for: range)
+                }
+            }
         }
         .padding(.horizontal, DesignTokens.Spacing.xxl)
         .padding(.vertical, DesignTokens.Spacing.xl)
         .background(DesignTokens.Colors.card, in: .rect(cornerRadius: 16, style: .continuous))
         .shadow(DesignTokens.Elevation.card)
+    }
+
+    private func hourMenu(_ hour: Int, onPick: @escaping (Int) -> Void) -> some View {
+        Menu {
+            Picker("", selection: Binding(get: { hour }, set: onPick)) {
+                ForEach(0..<24, id: \.self) { candidate in
+                    Text(TimeRange.label(hour: candidate)).tag(candidate)
+                }
+            }
+        } label: {
+            Text(TimeRange.label(hour: hour))
+                .textStyle(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.accentInk)
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .frame(height: DesignTokens.Size.chipHeightSmall)
+                .background(DesignTokens.Colors.fill, in: .capsule)
+        }
     }
 
     static func label(for range: ClosedRange<Date>) -> String {
