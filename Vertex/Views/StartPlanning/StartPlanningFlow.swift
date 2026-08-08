@@ -80,10 +80,11 @@ struct StartPlanningFlow: View {
         let participantIds = [organiser.id] + invited.map(\.id)
 
         let slots = draft.proposedRanges.enumerated().map { index, range in
-            Slot(
+            let window = draft.slotDates(for: range)
+            return Slot(
                 id: "\(eventId)_s\(index)",
-                start: Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: range.lowerBound) ?? range.lowerBound,
-                end: Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: range.upperBound) ?? range.upperBound,
+                start: window.start,
+                end: window.end,
                 proposedBy: organiser.id
             )
         }
