@@ -167,7 +167,7 @@ final class MockEventRepository: EventRepository, UserDirectory, @unchecked Send
     }
 
     private func blank(_ id: EventID) -> Event {
-        Event(id: id, name: "", place: "", duration: .evening, organiserId: "",
+        Event(id: id, name: "", place: "", organiserId: "",
               createdAt: .now, status: .voting, availabilityClosesAt: .now,
               votingClosesAt: .now, round: 1, participantIds: [], decided: nil, cancellation: nil)
     }

@@ -68,6 +68,7 @@ struct FriendsListView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, DesignTokens.Layout.fieldTopInsetLarge)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .dismissesKeyboardOnTap()
         .alert(
             "Remove \(pendingRemoval?.username ?? "")?",
             isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } })

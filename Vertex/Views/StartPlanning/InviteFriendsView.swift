@@ -86,6 +86,7 @@ struct InviteFriendsView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .padding(.top, DesignTokens.Layout.fieldTopInset)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
+        .dismissesKeyboardOnTap()
     }
 
     private func invitedPill(_ user: User) -> some View {

@@ -7,7 +7,6 @@ import Observation
 final class EventDraft {
     var name = ""
     var place = ""
-    var duration: Event.Duration = .evening
     var invitedIds: Set<UserID> = []
     /// Days the organiser marked for themselves, normalised to midnight.
     var selectedDays: Set<Date> = []

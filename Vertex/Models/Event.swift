@@ -4,7 +4,6 @@ struct Event: Identifiable, Codable, Hashable {
     let id: EventID
     var name: String
     var place: String
-    var duration: Duration
     /// Whoever created it. Carries no special powers — finishing voting is
     /// per-user and anyone can propose cancelling.
     var organiserId: UserID
@@ -27,19 +26,6 @@ struct Event: Identifiable, Codable, Hashable {
 
     enum Status: String, Codable, CaseIterable {
         case gathering, voting, decided, cancelled
-    }
-
-    enum Duration: String, Codable, CaseIterable {
-        case hour, evening, allDay, weekend
-
-        var label: String {
-            switch self {
-            case .hour: "An hour"
-            case .evening: "An evening"
-            case .allDay: "All day"
-            case .weekend: "A whole weekend"
-            }
-        }
     }
 
     struct DecidedSlot: Codable, Hashable {
