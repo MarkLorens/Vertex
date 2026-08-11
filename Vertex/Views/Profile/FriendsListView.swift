@@ -24,7 +24,6 @@ struct FriendsListView: View {
             nav
                 .padding(.horizontal, DesignTokens.Layout.screenPadding)
                 .padding(.top, DesignTokens.Spacing.sm)
-
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 Text(friends.count == 1 ? "1 friend" : "\(friends.count) friends")
                     .textStyle(DesignTokens.Typography.title)
@@ -66,7 +65,7 @@ struct FriendsListView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .padding(.top, DesignTokens.Layout.fieldTopInsetLarge)
+        .padding(.top, DesignTokens.Layout.fieldPadding)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
         .dismissesKeyboardOnTap()
         .alert(

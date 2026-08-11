@@ -191,7 +191,9 @@ extension MockEventRepository {
             lock.withLock { userListeners[key] = continuation }
             if let user = lock.withLock({ users.first { $0.id == uid } }) { continuation.yield(user) }
             continuation.onTermination = { [weak self] _ in
-                self?.lock.withLock { _ = self?.userListeners.removeValue(forKey: key) }
+                Task { @MainActor [weak self] in
+                    self?.lock.withLock { _ = self?.userListeners.removeValue(forKey: key) }
+                }
             }
         }
     }
@@ -202,7 +204,9 @@ extension MockEventRepository {
             lock.withLock { friendListeners[key] = (uid, continuation) }
             continuation.yield(snapshotFriends(of: uid))
             continuation.onTermination = { [weak self] _ in
-                self?.lock.withLock { _ = self?.friendListeners.removeValue(forKey: key) }
+                Task { @MainActor [weak self] in
+                    self?.lock.withLock { _ = self?.friendListeners.removeValue(forKey: key) }
+                }
             }
         }
     }
@@ -213,7 +217,9 @@ extension MockEventRepository {
             lock.withLock { requestListeners[key] = (uid, false, continuation) }
             continuation.yield(snapshotRequests(uid, outgoing: false))
             continuation.onTermination = { [weak self] _ in
-                self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+                Task { @MainActor [weak self ] in
+                    self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+                }
             }
         }
     }
@@ -224,7 +230,9 @@ extension MockEventRepository {
             lock.withLock { requestListeners[key] = (uid, true, continuation) }
             continuation.yield(snapshotRequests(uid, outgoing: true))
             continuation.onTermination = { [weak self] _ in
-                self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+                Task { @MainActor [weak self] in
+                    self?.lock.withLock { _ = self?.requestListeners.removeValue(forKey: key) }
+                }
             }
         }
     }
@@ -235,7 +243,9 @@ extension MockEventRepository {
             lock.withLock { acceptedListeners[key] = (uid, continuation) }
             continuation.yield(snapshotAccepted(uid))
             continuation.onTermination = { [weak self] _ in
-                self?.lock.withLock { _ = self?.acceptedListeners.removeValue(forKey: key) }
+                Task { @MainActor [weak self] in
+                    self?.lock.withLock { _ = self?.acceptedListeners.removeValue(forKey: key) }
+                }
             }
         }
     }

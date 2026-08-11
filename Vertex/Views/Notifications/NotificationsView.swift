@@ -142,8 +142,7 @@ struct NotificationRow: View {
             friendRequestRow(request, sender)
         case .friendAccepted(let request, let friend):
             settledRow(avatar: friend.avatar) {
-                (Text(friend.username).fontWeight(.bold).foregroundColor(DesignTokens.Colors.ink)
-                 + Text(" is now your friend"))
+                Text("\(strong(friend.username)) is now your friend")
                     .textStyle(DesignTokens.Typography.subtitle)
                     .foregroundStyle(DesignTokens.Colors.inkStrong)
                 Text(relative(request.respondedAt ?? request.createdAt))
@@ -179,7 +178,7 @@ struct NotificationRow: View {
                     }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    (Text(sender.username).fontWeight(.bold) + Text(" wants to be friends"))
+                    Text("\(strong(sender.username)) wants to be friends")
                         .textStyle(DesignTokens.Typography.subtitle)
                         .foregroundStyle(DesignTokens.Colors.ink)
                         .multilineTextAlignment(.leading)
@@ -209,10 +208,7 @@ struct NotificationRow: View {
             HStack(alignment: .top, spacing: 13) {
                 AvatarView(avatar: organiser?.avatar ?? unknownAvatar, diameter: 42)
                 VStack(alignment: .leading, spacing: 3) {
-                    (Text(firstName(organiser)).fontWeight(.bold)
-                     + Text(" is planning ")
-                     + Text(event.name).fontWeight(.bold)
-                     + Text(". Hop on in!"))
+                    Text("\(strong(firstName(organiser))) is planning \(strong(event.name)). Hop on in!")
                         .textStyle(DesignTokens.Typography.subtitle)
                         .foregroundStyle(DesignTokens.Colors.ink)
                         .multilineTextAlignment(.leading)
@@ -252,10 +248,7 @@ struct NotificationRow: View {
             onOpenEvent(event)
         } label: {
             settledRow(avatar: organiser?.avatar ?? unknownAvatar) {
-                (Text(firstName(organiser)).fontWeight(.bold).foregroundColor(DesignTokens.Colors.ink)
-                 + Text(" is planning ")
-                 + Text(event.name).fontWeight(.bold).foregroundColor(DesignTokens.Colors.ink)
-                 + Text("."))
+                Text("\(strong(firstName(organiser))) is planning \(strong(event.name)).")
                     .textStyle(DesignTokens.Typography.subtitle)
                     .foregroundStyle(DesignTokens.Colors.inkStrong)
                     .multilineTextAlignment(.leading)
@@ -293,6 +286,15 @@ struct NotificationRow: View {
     }
 
     private var unknownAvatar: Avatar { Avatar(initials: "?", colorIndex: 0) }
+
+    /// A name or title picked out of the sentence around it. The colour rides on
+    /// the run rather than the row, because the settled rows set their body one
+    /// step down from full ink and the name still wants all of it.
+    private func strong(_ value: String) -> Text {
+        Text(value)
+            .fontWeight(.bold)
+            .foregroundColor(DesignTokens.Colors.ink)
+    }
 
     private func firstName(_ user: User?) -> String {
         guard let user else { return "Someone" }

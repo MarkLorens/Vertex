@@ -25,7 +25,7 @@ struct AvailabilityView: View {
                 Text("When could you do it?")
                     .textStyle(DesignTokens.Typography.title)
                     .foregroundStyle(DesignTokens.Colors.onField)
-                Text("Tap the days that work. Everyone else adds theirs on top.")
+                Text("Tap the days and time that work for you.")
                     .textStyle(DesignTokens.Typography.callout)
                     .foregroundStyle(DesignTokens.Colors.onFieldMuted)
             }
@@ -65,10 +65,6 @@ struct AvailabilityView: View {
                 .textStyle(DesignTokens.Typography.calloutStrong)
                 .foregroundStyle(DesignTokens.Colors.ink)
             Spacer(minLength: 0)
-
-            // The doc shows a flat "from 5pm" here. Each range carries its own
-            // hours, because a Friday evening and a Saturday all-day aren't the
-            // same offer.
             HStack(spacing: DesignTokens.Spacing.sm) {
                 hourMenu(time.startHour) {
                     draft.setTime(TimeRange(startHour: $0, endHour: time.endHour), for: range)
