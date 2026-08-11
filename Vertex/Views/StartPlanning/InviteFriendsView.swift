@@ -38,7 +38,7 @@ struct InviteFriendsView: View {
             .padding(.horizontal, DesignTokens.Layout.screenPadding)
 
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                Text("Who's in?")
+                Text("Who's coming?")
                     .textStyle(DesignTokens.Typography.title)
                     .foregroundStyle(DesignTokens.Colors.onField)
                 Text("\(invited.count) invited · everyone can add more later.")
@@ -78,7 +78,7 @@ struct InviteFriendsView: View {
                 }
                 .scrollIndicators(.hidden)
 
-                ButtonPrimary("Next · Your availability", icon: "chevron.right", iconEdge: .trailing, action: onNext)
+                ButtonPrimary("When are you free", icon: "arrow.right", iconEdge: .trailing, action: onNext)
                     .disabled(!draft.canLeaveInvites)
                     .padding(.top, DesignTokens.Spacing.xxl)
             }

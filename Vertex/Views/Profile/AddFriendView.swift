@@ -23,7 +23,7 @@ struct AddFriendView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SheetHandle().padding(.bottom, DesignTokens.Spacing.md)
+//            SheetHandle().padding(.bottom, DesignTokens.Spacing.md)
 
             HStack {
                 Button("Close", action: onClose)
@@ -45,7 +45,7 @@ struct AddFriendView: View {
                 Text("Who are we looking for?")
                     .textStyle(DesignTokens.Typography.titleMedium)
                     .foregroundStyle(DesignTokens.Colors.onField)
-                Text("Names repeat, addresses don't — so we search by email.")
+                Text("By email, please! You might add the wrong Dave.")
                     .textStyle(DesignTokens.Typography.callout)
                     .foregroundStyle(DesignTokens.Colors.onFieldMuted)
                     .lineSpacing(3)
@@ -76,7 +76,7 @@ struct AddFriendView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .padding(.top, DesignTokens.Layout.fieldTopInset)
+        .padding(.top, DesignTokens.Layout.fieldPadding)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
         .dismissesKeyboardOnTap()
         .onAppear {

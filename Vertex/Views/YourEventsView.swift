@@ -124,10 +124,9 @@ struct YourEventsView: View {
     /// Neither empty state is in the doc — turn 2 only draws the full screen.
     private var empty: some View {
         VStack(spacing: DesignTokens.Spacing.xxl) {
-            Text(segment == .decided ? "Nothing locked in yet." : "Nothing being decided.")
+            Text(segment == .decided ? "How about a beach trip?" : "All good here.")
                 .textStyle(DesignTokens.Typography.bodyLargeStrong)
                 .foregroundStyle(DesignTokens.Colors.inkTertiary)
-            ButtonSecondary("Start Planning", icon: "plus") { planning = true }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 56)
@@ -288,27 +287,27 @@ private extension YourEventsView {
         case .decided:
             // 2b only draws the deciding side; this borrows 2a's own subtitle.
             Text(decidedItems.isEmpty
-                 ? "Nothing locked in."
+                 ? "It's brewing..."
                  : "\(Self.spelled(decidedItems.count)) locked in.")
         case .deciding:
             let count = orderedDeciding.filter { urgency($0) == .needsYou }.count
             switch count {
             case 0:
-                Text("Nothing's waiting on you.")
+                Text("It's their turn.")
             case 1:
-                emphasised(prefix: "One is waiting on ", suffix: " vote.")
+                Text("One is waiting on \(yours) vote.")
             default:
-                emphasised(prefix: "\(Self.spelled(count)) are waiting on ", suffix: " vote.")
+                Text("\(Self.spelled(count)) are waiting on \(yours) vote.")
             }
         }
     }
 
-    func emphasised(prefix: String, suffix: String) -> Text {
-        Text(prefix)
-        + Text("your")
+    /// "your", picked out of the lighter sentence around it. The weight and
+    /// colour ride on the run, since the line itself is set in inkSecondary.
+    var yours: Text {
+        Text("your")
             .font(DesignTokens.Typography.captionStrong.font)
             .foregroundColor(DesignTokens.Colors.ink)
-        + Text(suffix)
     }
 
     /// "All 6 voted · Thu 4 Sep wins".

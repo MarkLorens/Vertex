@@ -25,7 +25,7 @@ struct CreateEventView: View {
                 Text("What's the plan?")
                     .textStyle(DesignTokens.Typography.title)
                     .foregroundStyle(DesignTokens.Colors.onField)
-                Text("Dates come later — the group sorts that out.")
+                Text("Cooking, hiking, or maybe a game night?")
                     .textStyle(DesignTokens.Typography.callout)
                     .foregroundStyle(DesignTokens.Colors.onFieldMuted)
             }
@@ -35,7 +35,7 @@ struct CreateEventView: View {
             .padding(.bottom, DesignTokens.Spacing.huge)
 
             SheetSurface {
-                Text("Event name")
+                Text("What are we up to?")
                     .textStyle(DesignTokens.Typography.eyebrow)
                     .foregroundStyle(DesignTokens.Colors.inkSubtle)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -51,7 +51,7 @@ struct CreateEventView: View {
                         DesignTokens.Colors.accent.frame(height: 1.5)
                     }
 
-                Text("Where")
+                Text("Where is it?")
                     .textStyle(DesignTokens.Typography.eyebrow)
                     .foregroundStyle(DesignTokens.Colors.inkSubtle)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -75,7 +75,7 @@ struct CreateEventView: View {
 
                 Spacer(minLength: DesignTokens.Spacing.huge)
 
-                ButtonPrimary("Next · Invite friends", icon: "chevron.right", iconEdge: .trailing, action: onNext)
+                ButtonPrimary("Who's Coming", icon: "arrow.right", iconEdge: .trailing, action: onNext)
                     .disabled(!draft.canLeaveDetails)
             }
         }
@@ -90,7 +90,7 @@ struct CreateEventView: View {
 #Preview {
     CreateEventView(draft: {
         let d = EventDraft(organiserId: MockData.ivy.id)
-        d.name = "Camping weekend"
+        d.name = ""
         return d
     }())
 }
