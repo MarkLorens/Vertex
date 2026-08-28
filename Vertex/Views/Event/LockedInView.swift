@@ -28,7 +28,7 @@ struct LockedInView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            EventNav(title: store.event.name, onBack: onBack)
+            EventNav(title: store.event.name, showsOverflow: false, onBack: onBack)
                 .padding(.horizontal, DesignTokens.Layout.screenPadding)
                 .padding(.top, DesignTokens.Spacing.sm)
 
@@ -42,7 +42,7 @@ struct LockedInView: View {
                             .textStyle(DesignTokens.Typography.eyebrow)
                             .foregroundStyle(DesignTokens.Colors.onField)
                     }
-                    .padding(.bottom, DesignTokens.Spacing.lg)
+                    .padding(.vertical, DesignTokens.Spacing.xxl)
                 }
 
                 if let decided = store.event.decided {
@@ -82,7 +82,6 @@ struct LockedInView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .padding(.top, DesignTokens.Layout.fieldTopInset)
         .background(DesignTokens.Colors.field.ignoresSafeArea())
     }
 

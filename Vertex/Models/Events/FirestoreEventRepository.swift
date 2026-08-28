@@ -201,6 +201,20 @@ final class FirestoreEventRepository: EventRepository, UserDirectory, @unchecked
         ])
     }
 
+    func setAvailability(eventId: EventID, availability: Availability, at date: Date) async throws {
+        let document = event(eventId)
+        let batch = store.batch()
+        try batch.setData(
+            from: availability,
+            forDocument: document.collection("availability").document(availability.id)
+        )
+        batch.updateData(
+            ["availabilitySubmittedAt": Timestamp(date: date)],
+            forDocument: document.collection("participants").document(availability.id)
+        )
+        try await batch.commit()
+    }
+
     /// Needs no one else's permission, which is exactly one rule: you may only
     /// pull your own uid out of `participantIds`.
     func leave(eventId: EventID, uid: UserID) async throws {

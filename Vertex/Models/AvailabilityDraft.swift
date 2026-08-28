@@ -4,7 +4,7 @@ import Observation
 /// The days and hours one person is picking. Used twice: by the organiser on the
 /// last creation step, and by everyone else once they've accepted the invite.
 @Observable
-final class AvailabilityDraft {
+final class AvailabilityDraft: AvailabilityPicking {
     /// Normalised to midnight.
     var selectedDays: Set<Date> = []
     /// The hours each run of days runs between, keyed by its first day. A run
@@ -32,8 +32,7 @@ final class AvailabilityDraft {
         if let chosen = times[range.lowerBound] { return chosen }
         // 5pm is the doc's "from 5pm". A run of days ends mid-afternoon on the
         // last one, so a weekend finishes Sunday afternoon rather than Sunday night.
-        let spansDays = !Calendar.current.isDate(range.lowerBound, inSameDayAs: range.upperBound)
-        return TimeRange(startHour: 17, endHour: spansDays ? 16 : 23)
+        return TimeRange(startHour: 17, endHour: range.spansDays ? 16 : 23)
     }
 
     func setTime(_ time: TimeRange, for range: ClosedRange<Date>) {
@@ -54,9 +53,43 @@ final class AvailabilityDraft {
     }
 }
 
+/// What the day-and-time picker needs from whichever draft it is editing — the
+/// organiser's event draft on the last creation step, or an invitee's own.
+protocol AvailabilityPicking: AnyObject, Observable {
+    func isSelected(_ day: Date) -> Bool
+    func toggleDay(_ day: Date)
+    var proposedRanges: [ClosedRange<Date>] { get }
+    func time(for range: ClosedRange<Date>) -> TimeRange
+    func setTime(_ time: TimeRange, for range: ClosedRange<Date>)
+}
+
+/// Consecutive selected days collapse into one run, which is what the "Your
+/// times" list and the proposed slots are built from.
+enum DayRuns {
+    static func collapse(_ days: Set<Date>) -> [ClosedRange<Date>] {
+        let calendar = Calendar.current
+        var runs: [ClosedRange<Date>] = []
+        var start: Date?
+        var previous: Date?
+
+        for day in days.sorted() {
+            if let last = previous,
+               calendar.date(byAdding: .day, value: 1, to: last).map({ calendar.isDate($0, inSameDayAs: day) }) == true {
+                previous = day
+            } else {
+                if let s = start, let p = previous { runs.append(s...p) }
+                start = day
+                previous = day
+            }
+        }
+        if let s = start, let p = previous { runs.append(s...p) }
+        return runs
+    }
+}
+
 /// The hours one run of days runs between. Hour granularity only — "when could
 /// you do it?" doesn't need minutes, and it keeps the row to two taps.
-struct TimeRange: Hashable {
+struct TimeRange: Codable, Hashable {
     var startHour: Int
     var endHour: Int
 
@@ -67,5 +100,11 @@ struct TimeRange: Hashable {
         let calendar = Calendar.current
         let date = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: .now) ?? .now
         return date.formatted(.dateTime.hour().minute())
+    }
+}
+
+extension ClosedRange<Date> {
+    var spansDays: Bool {
+        !Calendar.current.isDate(lowerBound, inSameDayAs: upperBound)
     }
 }

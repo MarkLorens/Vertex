@@ -172,6 +172,35 @@ extension MockData {
 
     // MARK: Planning-flow states
 
+    /// 3c for an invitee — still gathering, and only the organiser and Sam have
+    /// answered. Ivy is one of the three holding it up.
+    static let gatheringEvent: EventDetail = {
+        let people = [ivy, sam, theo, jo, nina]
+        let event = Event(
+            id: "e_hike",
+            name: "Coast path hike",
+            place: "Start at the harbour",
+            organiserId: theo.id,
+            createdAt: .daysAgo(1),
+            status: .gathering,
+            availabilityClosesAt: .inDays(2, hour: 20),
+            votingClosesAt: .inDays(5, hour: 20),
+            round: 1,
+            participantIds: people.map(\.id),
+            decided: nil,
+            cancellation: nil
+        )
+
+        let submitted: Set<UserID> = [theo.id, sam.id]
+        let answered: Set<UserID> = [theo.id, sam.id, ivy.id]
+        let participants = people.map {
+            participant($0, status: answered.contains($0.id) ? .going : .invited,
+                        submittedAvailability: submitted.contains($0.id))
+        }
+
+        return EventDetail(event: event, participants: participants)
+    }()
+
     /// 3e — everyone has finished and the top two are level, so `isDraw()` fires.
     static let drawnEvent: EventDetail = {
         var detail = campingWeekend

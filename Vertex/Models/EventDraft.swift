@@ -4,7 +4,7 @@ import Observation
 /// What the three creation sheets are filling in. Nothing exists server-side
 /// until step 3 sends, so this is the only home for it until then.
 @Observable
-final class EventDraft {
+final class EventDraft: AvailabilityPicking {
     var name = ""
     var place = ""
     var invitedIds: Set<UserID> = []
@@ -41,28 +41,7 @@ final class EventDraft {
         selectedDays.contains(Calendar.current.startOfDay(for: day))
     }
 
-    /// Consecutive selected days collapse into one range, which is what the
-    /// "Your times" list and the proposed slots are built from.
-    var proposedRanges: [ClosedRange<Date>] {
-        let calendar = Calendar.current
-        let sorted = selectedDays.sorted()
-        var ranges: [ClosedRange<Date>] = []
-        var start: Date?
-        var previous: Date?
-
-        for day in sorted {
-            if let last = previous,
-               calendar.date(byAdding: .day, value: 1, to: last).map({ calendar.isDate($0, inSameDayAs: day) }) == true {
-                previous = day
-            } else {
-                if let s = start, let p = previous { ranges.append(s...p) }
-                start = day
-                previous = day
-            }
-        }
-        if let s = start, let p = previous { ranges.append(s...p) }
-        return ranges
-    }
+    var proposedRanges: [ClosedRange<Date>] { DayRuns.collapse(selectedDays) }
 }
 
 // MARK: - Times
@@ -80,45 +59,8 @@ extension EventDraft {
         times[range.lowerBound] = time
     }
 
-    /// The absolute window a range's slot covers. On a single day an end at or
-    /// before the start means it runs past midnight — 11pm to 2am is a real answer.
+    /// The absolute window a range's slot covers.
     func slotDates(for range: ClosedRange<Date>) -> (start: Date, end: Date) {
-        let calendar = Calendar.current
-        let time = time(for: range)
-        let start = calendar.date(
-            bySettingHour: time.startHour, minute: 0, second: 0, of: range.lowerBound
-        ) ?? range.lowerBound
-
-        var lastDay = range.upperBound
-        if !range.spansDays, time.endHour <= time.startHour {
-            lastDay = calendar.date(byAdding: .day, value: 1, to: lastDay) ?? lastDay
-        }
-        let end = calendar.date(
-            bySettingHour: time.endHour, minute: 0, second: 0, of: lastDay
-        ) ?? lastDay
-
-        return (start, end)
-    }
-}
-
-/// The hours one proposed run of days runs between. Hour granularity only —
-/// "when could you do it?" doesn't need minutes, and it keeps the row to two taps.
-struct TimeRange: Hashable {
-    var startHour: Int
-    var endHour: Int
-
-    /// "5:00 PM" or "17.00", whichever the device is set to. Minutes are carried
-    /// even though they're always zero — a bare "17" next to a "Wed 19 — Thu 20"
-    /// label reads as another date.
-    static func label(hour: Int) -> String {
-        let calendar = Calendar.current
-        let date = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: .now) ?? .now
-        return date.formatted(.dateTime.hour().minute())
-    }
-}
-
-private extension ClosedRange<Date> {
-    var spansDays: Bool {
-        !Calendar.current.isDate(lowerBound, inSameDayAs: upperBound)
+        Availability.Window(run: range, hours: time(for: range)).dates
     }
 }

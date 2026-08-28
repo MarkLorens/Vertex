@@ -128,6 +128,15 @@ final class MockEventRepository: EventRepository, UserDirectory, @unchecked Send
         }
     }
 
+    func setAvailability(eventId: EventID, availability: Availability, at date: Date) async throws {
+        mutate(eventId) { detail in
+            detail.availability.removeAll { $0.id == availability.id }
+            detail.availability.append(availability)
+            guard let index = detail.participants.firstIndex(where: { $0.id == availability.id }) else { return }
+            detail.participants[index].availabilitySubmittedAt = date
+        }
+    }
+
     func leave(eventId: EventID, uid: UserID) async throws {
         mutate(eventId) { detail in
             detail.event.participantIds.removeAll { $0 == uid }
