@@ -9,7 +9,7 @@ struct VotingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            EventNav(title: store.event.name, onBack: onBack)
+            EventNav(title: store.event.name, showsOverflow: false, onBack: onBack)
                 .padding(.horizontal, DesignTokens.Layout.screenPadding)
                 .padding(.top, DesignTokens.Spacing.sm)
 

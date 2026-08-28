@@ -27,6 +27,11 @@ protocol EventRepository: Sendable {
     func setCancellation(eventId: EventID, cancellation: Cancellation?) async throws
     func setCancellationVote(eventId: EventID, uid: UserID, cancel: Bool) async throws
 
+    /// One person's days and hours, plus the gate flag that says they answered.
+    /// Written together — a flag with no days would count towards opening voting
+    /// on nothing.
+    func setAvailability(eventId: EventID, availability: Availability, at date: Date) async throws
+
     func setAlarm(eventId: EventID, uid: UserID, alarm: Alarm?) async throws
     func setParticipantStatus(eventId: EventID, uid: UserID, status: Participant.Status) async throws
     /// Leaving purges this person's votes and availability and takes them out of

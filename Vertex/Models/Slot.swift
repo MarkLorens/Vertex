@@ -60,9 +60,49 @@ struct VoteTally: Hashable {
     var net: Int { yes - no }
 }
 
-/// The days one person marked as workable in step 3.
+/// The days one person marked as workable in step 3, and the hours they'd do
+/// them between.
 struct Availability: Identifiable, Codable, Hashable {
     /// The user's uid.
     let id: UserID
     var days: [Date]
+    /// One entry per run of consecutive days, carrying the hours picked for it.
+    var windows: [Window] = []
+
+    struct Window: Codable, Hashable {
+        var run: ClosedRange<Date>
+        var hours: TimeRange
+    }
+}
+
+extension Availability {
+    /// Availability written before hours existed carries days only, and the
+    /// synthesised decoder would reject those documents rather than default them.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UserID.self, forKey: .id)
+        days = try container.decode([Date].self, forKey: .days)
+        windows = try container.decodeIfPresent([Window].self, forKey: .windows) ?? []
+    }
+}
+
+extension Availability.Window {
+    /// The absolute span this window covers. On a single day an end at or before
+    /// the start means it runs past midnight — 11pm to 2am is a real answer.
+    var dates: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let start = calendar.date(
+            bySettingHour: hours.startHour, minute: 0, second: 0, of: run.lowerBound
+        ) ?? run.lowerBound
+
+        var lastDay = run.upperBound
+        if !run.spansDays, hours.endHour <= hours.startHour {
+            lastDay = calendar.date(byAdding: .day, value: 1, to: lastDay) ?? lastDay
+        }
+        let end = calendar.date(
+            bySettingHour: hours.endHour, minute: 0, second: 0, of: lastDay
+        ) ?? lastDay
+
+        return (start, end)
+    }
 }

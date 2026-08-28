@@ -15,13 +15,13 @@ struct EventView: View {
             case .voting:
                 VotingView(store: store, onBack: onBack)
             case .draw:
-                DrawView(store: store)
+                DrawView(store: store, onBack: onBack)
             case .runoff:
                 RunoffView(store: store, onBack: onBack)
             case .lockedIn:
                 LockedInView(store: store, onBack: onBack) { proposingCancellation = true }
             case .cancelVote:
-                CancelVoteView(store: store)
+                CancelVoteView(store: store, onBack: onBack)
             }
         }
         .animation(.easeInOut(duration: 0.25), value: store.stage)

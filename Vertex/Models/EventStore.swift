@@ -113,6 +113,18 @@ final class EventStore {
         return (slot.yesCount, slot.noCount)
     }
 
+    // MARK: - Availability
+
+    var hasSubmittedAvailability: Bool { me?.hasSubmittedAvailability ?? false }
+
+    /// One-shot — there's no screen to come back to, so this guards rather than
+    /// re-writes. The flag it sets is what the "waiting on n more" count reads.
+    func submitAvailability(_ draft: AvailabilityDraft) {
+        guard !draft.isEmpty, !hasSubmittedAvailability, event.status == .gathering else { return }
+        let offer = draft.offer(from: currentUserId)
+        write { try await $0.setAvailability(eventId: self.event.id, availability: offer, at: .now) }
+    }
+
     // MARK: - Alarm
 
     var alarm: Alarm {

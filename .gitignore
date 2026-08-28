@@ -16,3 +16,6 @@ GoogleService-Info.plist
 
 # Secrets
 .env
+
+CLAUDE.md
+PRD.md

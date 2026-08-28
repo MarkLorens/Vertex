@@ -4,6 +4,7 @@ import SwiftUI
 /// reads differently from every other event view without shouting.
 struct CancelVoteView: View {
     @Bindable var store: EventStore
+    var onBack: () -> Void = {}
 
     private var cancellation: Cancellation? { store.event.cancellation }
 
@@ -18,7 +19,7 @@ struct CancelVoteView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            EventNav(title: store.event.name)
+            EventNav(title: store.event.name, showsOverflow: false, onBack: onBack)
                 .padding(.horizontal, DesignTokens.Layout.screenPadding)
                 .padding(.top, DesignTokens.Spacing.sm)
 
@@ -98,7 +99,6 @@ struct CancelVoteView: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .padding(.top, DesignTokens.Layout.fieldTopInset)
         .background(DesignTokens.Colors.fieldDanger.ignoresSafeArea())
     }
 

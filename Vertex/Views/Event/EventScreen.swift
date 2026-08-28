@@ -21,6 +21,12 @@ struct EventScreen: View {
                     .overlay {
                         ProgressView().tint(DesignTokens.Colors.onField)
                     }
+                    // An event that never arrives — deleted, or unreadable —
+                    // would otherwise spin forever inside a full-screen cover.
+                    .overlay(alignment: .top) {
+                        EventNav(title: "", showsOverflow: false, onBack: onClose)
+                            .padding(.horizontal, DesignTokens.Layout.screenPadding)
+                    }
             }
         }
         .task(id: eventId) {
